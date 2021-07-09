@@ -6,10 +6,14 @@
 
 pragma solidity^0.5.0;
 
-contract BlockchainSplitwise {
-
+contract Splitwise {
     address[] public users;
     mapping(address => mapping(address => uint32)) public debts;
+    address owner;
+
+    constructor() public {
+        owner = msg.sender;
+    }
 
     function getUsers() public view returns (address[] memory ret){
         ret = new address[](users.length);
@@ -41,5 +45,23 @@ contract BlockchainSplitwise {
 
     function lookup(address debtor, address creditor) public view returns (uint32 ret) {
         ret = debts[debtor][creditor];
+    }
+
+    modifier ifOwner() {
+        if(owner != msg.sender) {
+            revert();
+        } else {
+            _;
+        }
+    }
+
+    function deposit() payable public {}
+
+    function getBalance() public view returns (uint) {
+        return address(this).balance;
+    }
+
+    function withdraw(uint funds) public ifOwner {
+        msg.sender.transfer(funds);
     }
 }
