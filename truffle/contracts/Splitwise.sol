@@ -4,7 +4,7 @@
 // Note that writing a contract here WILL NOT deploy it and allow you to access it from your client
 // You should write and develop your contract in Remix and then, before submitting, copy and paste it here
 
-pragma solidity^0.8.4;
+pragma solidity^0.5.0;
 
 contract Splitwise {
     address[] public users;

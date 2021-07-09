@@ -18,7 +18,192 @@ var GENESIS = '0x000000000000000000000000000000000000000000000000000000000000000
 // This is the ABI for your contract (get it from Remix, in the 'Compile' tab)
 // If you use truffle you can load abi from truffle build folder
 // ============================================================
-var abi = []; // FIXME: fill this in with your contract's ABI
+var abi = [
+    {
+        "constant": true,
+        "inputs": [],
+        "name": "getUsers",
+        "outputs": [
+            {
+                "name": "ret",
+                "type": "address[]"
+            }
+        ],
+        "payable": false,
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "constant": false,
+        "inputs": [
+            {
+                "name": "debtor",
+                "type": "address"
+            },
+            {
+                "name": "creditor",
+                "type": "address"
+            },
+            {
+                "name": "amount",
+                "type": "uint32"
+            }
+        ],
+        "name": "increaseDebt",
+        "outputs": [],
+        "payable": false,
+        "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    {
+        "constant": true,
+        "inputs": [],
+        "name": "getBalance",
+        "outputs": [
+            {
+                "name": "",
+                "type": "uint256"
+            }
+        ],
+        "payable": false,
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "constant": false,
+        "inputs": [
+            {
+                "name": "funds",
+                "type": "uint256"
+            }
+        ],
+        "name": "withdraw",
+        "outputs": [],
+        "payable": false,
+        "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    {
+        "constant": true,
+        "inputs": [
+            {
+                "name": "",
+                "type": "uint256"
+            }
+        ],
+        "name": "users",
+        "outputs": [
+            {
+                "name": "",
+                "type": "address"
+            }
+        ],
+        "payable": false,
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "constant": true,
+        "inputs": [
+            {
+                "name": "",
+                "type": "address"
+            },
+            {
+                "name": "",
+                "type": "address"
+            }
+        ],
+        "name": "debts",
+        "outputs": [
+            {
+                "name": "",
+                "type": "uint32"
+            }
+        ],
+        "payable": false,
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "constant": true,
+        "inputs": [
+            {
+                "name": "debtor",
+                "type": "address"
+            },
+            {
+                "name": "creditor",
+                "type": "address"
+            }
+        ],
+        "name": "lookup",
+        "outputs": [
+            {
+                "name": "ret",
+                "type": "uint32"
+            }
+        ],
+        "payable": false,
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "constant": false,
+        "inputs": [],
+        "name": "deposit",
+        "outputs": [],
+        "payable": true,
+        "stateMutability": "payable",
+        "type": "function"
+    },
+    {
+        "constant": false,
+        "inputs": [
+            {
+                "name": "creditor",
+                "type": "address"
+            },
+            {
+                "name": "amount",
+                "type": "uint32"
+            }
+        ],
+        "name": "add_IOU",
+        "outputs": [],
+        "payable": false,
+        "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    {
+        "constant": false,
+        "inputs": [
+            {
+                "name": "debtor",
+                "type": "address"
+            },
+            {
+                "name": "creditor",
+                "type": "address"
+            },
+            {
+                "name": "amount",
+                "type": "uint32"
+            }
+        ],
+        "name": "decreaseDebt",
+        "outputs": [],
+        "payable": false,
+        "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    {
+        "inputs": [],
+        "payable": false,
+        "stateMutability": "nonpayable",
+        "type": "constructor"
+    }
+]; // FIXME: fill this in with your contract's ABI
 // ============================================================
 abiDecoder.addABI(abi);
 // call abiDecoder.decodeMethod to use this - see 'getAllFunctionCalls' for more
@@ -27,7 +212,7 @@ abiDecoder.addABI(abi);
 var BlockchainSplitwiseContractSpec = web3.eth.contract(abi);
 
 // This is the address of the contract you want to connect to; copy this from Remix
-var contractAddress = '0x??????????????????????????????????????????????????????' // FIXME: fill this in with your contract's address/hash
+var contractAddress = '0xe982E462b094850F12AF94d21D470e21bE9D0E9C' // FIXME: fill this in with your contract's address/hash
 
 var BlockchainSplitwise = BlockchainSplitwiseContractSpec.at(contractAddress)
 
@@ -38,32 +223,63 @@ var BlockchainSplitwise = BlockchainSplitwiseContractSpec.at(contractAddress)
 
 // TODO: Add any helper functions here!
 
+function lookup(debtor, creditor) {
+    return BlockchainSplitwise.lookup.call(debtor, creditor).c[0];
+}
+
+function getNeighbors(node) {
+    return getUsers().filter(user => lookup(node, user) > 0);
+}
+
 // TODO: Return a list of all users (creditors or debtors) in the system
 // You can return either:
 //   - a list of everyone who has ever sent or received an IOU
 // OR
 //   - a list of everyone currently owing or being owed money
 function getUsers() {
-    return [];
+    return BlockchainSplitwise.getUsers.call();
 }
 
 // TODO: Get the total amount owed by the user specified by 'user'
 function getTotalOwed(user) {
-
+    const users = getUsers();
+    let totalOwed = 0;
+    for (const u of users) {
+        totalOwed += lookup(user, u);
+    }
+    return totalOwed;
 }
 
 // TODO: Get the last time this user has sent or received an IOU, in seconds since Jan. 1, 1970
 // Return null if you can't find any activity for the user.
 // HINT: Try looking at the way 'getAllFunctionCalls' is written. You can modify it if you'd like.
 function getLastActive(user) {
-
+    const userFunctionCallsSorted = getAllFunctionCalls(contractAddress.toLowerCase(), 'add_IOU')
+      .filter((functionCall) => functionCall.from === user || functionCall.args[0] === user)
+      .sort((a, b) => a.timestamp > b.timestamp);
+    if (userFunctionCallsSorted.length <= 0) return null;
+    return userFunctionCallsSorted[0].timestamp
 }
 
 // TODO: add an IOU ('I owe you') to the system
 // The person you owe money is passed as 'creditor'
 // The amount you owe them is passed as 'amount'
 function add_IOU(creditor, amount) {
-
+    const route = doBFS(creditor, web3.eth.defaultAccount, getNeighbors)
+    let minimumAmount = 0
+    if (route) {
+        minimumAmount = amount;
+        for (let i = 0; i < route.length - 1; i++){
+            const temp = lookup(route[i], route[i + 1]);
+            if (temp < minimumAmount)
+                minimumAmount = temp;
+        }
+        for(let i = 0; i < route.length - 1; i++){
+            BlockchainSplitwise.decreaseDebt.sendTransaction(route[i], route[i+1], minimumAmount, {gas: 300000})
+        }
+    }
+    amount -= minimumAmount;
+    BlockchainSplitwise.add_IOU.sendTransaction(creditor, amount, {gas: 300000});
 }
 
 // =============================================================================
@@ -76,7 +292,7 @@ function add_IOU(creditor, amount) {
 function getAllFunctionCalls(addressOfContract, functionName) {
     var curBlock = web3.eth.blockNumber;
     var function_calls = [];
-    while (curBlock !== GENESIS) {
+    do {
         var b = web3.eth.getBlock(curBlock, true);
         var txns = b.transactions;
         for (var j = 0; j < txns.length; j++) {
@@ -86,16 +302,19 @@ function getAllFunctionCalls(addressOfContract, functionName) {
                 var func_call = abiDecoder.decodeMethod(txn.input);
                 // check that the function getting called in this txn is 'functionName'
                 if (func_call && func_call.name === functionName) {
-                    var args = func_call.params.map(function(x) { return x.value });
+                    var args = func_call.params.map(function (x) {
+                        return x.value
+                    });
                     function_calls.push({
                         from: txn.from,
-                        args: args
+                        args: args,
+                        timestamp: b.timestamp
                     })
                 }
             }
         }
         curBlock = b.parentHash;
-    }
+    } while (curBlock !== GENESIS)
     return function_calls;
 }
 
